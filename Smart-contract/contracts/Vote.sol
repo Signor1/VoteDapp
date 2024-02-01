@@ -36,6 +36,7 @@ contract Ballot {
     }
 
     function addCandidate(string memory _name) public onlyOwner {
+         totalVoteCount++;
         require(totalVoteCount < MAX_CANDIDATES, "Maximum number of candidates reached");
         voters[totalVoteCount] = Voter(VoterStatus.NotVoted, _name, 0);
         emit CandidateAdded(totalVoteCount, _name);
