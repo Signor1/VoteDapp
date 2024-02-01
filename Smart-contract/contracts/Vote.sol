@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 contract Ballot {
     uint public totalVoteCount;
+    uint constant public MAX_CANDIDATES = 5;
 
     enum VoterStatus { NotVoted, Voted }
 
@@ -14,6 +15,8 @@ contract Ballot {
 
     mapping(uint => Voter) public voters;
     mapping(address => bool) public voted;
+
+    string[MAX_CANDIDATES] public candidateNames;
 
     event CandidateAdded(uint indexed candidateId, string name);
     event VoteCast(address indexed voter, uint indexed candidateId);
@@ -33,6 +36,7 @@ contract Ballot {
     }
 
     function addCandidate(string memory _name) public onlyOwner {
+        require(totalVoteCount < MAX_CANDIDATES, "Maximum number of candidates reached");
         voters[totalVoteCount] = Voter(VoterStatus.NotVoted, _name, 0);
         emit CandidateAdded(totalVoteCount, _name);
     }
@@ -48,6 +52,10 @@ contract Ballot {
         voted[msg.sender] = true;
 
         emit VoteCast(msg.sender, _candidate);
+    }
+
+     function getAllCandidates() external view returns (string[MAX_CANDIDATES] memory) {
+        return candidateNames;
     }
 
     function winnerName() external view returns (string memory winnerName_) {
