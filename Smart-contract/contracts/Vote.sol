@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract Ballot {
+contract Vote {
     uint public totalVoteCount;
     uint public candidateCount;
     uint constant public MAX_CANDIDATES = 5;
