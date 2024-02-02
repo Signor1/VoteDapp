@@ -6,6 +6,7 @@ contract Ballot {
     uint public candidateCount;
     uint constant public MAX_CANDIDATES = 5;
     uint public electionTime;
+    string voterscardPasscode;
 
     enum VoterStatus { NotVoted, Voted }
 
@@ -41,6 +42,7 @@ contract Ballot {
         addCandidate("Sogo");
         addCandidate("Jeff");
         electionTime = block.timestamp + 30 minutes;
+        voterscardPasscode = "123";
     }
 
     function addCandidate(string memory _name) public onlyOwner {
@@ -51,9 +53,10 @@ contract Ballot {
         emit CandidateAdded(candidateCount, _name);
     }
 
-    function vote(uint _candidate) external electionTimeChecker {
+    function vote(uint _candidate, string memory _voterscardPasscode) external electionTimeChecker {
         require(!voted[msg.sender], "Already voted");
         require(_candidate <= candidateCount, "Invalid candidate");
+        require(keccak256(abi.encodePacked(voterscardPasscode)) == keccak256(abi.encodePacked(_voterscardPasscode)), "Wrong passcode, You can't vote, input correct passcode");
 
         // Update voteCounter for the selected candidate
         voters[_candidate].voteCounter++;
@@ -85,4 +88,5 @@ contract Ballot {
         }
     }
 }
+
 
