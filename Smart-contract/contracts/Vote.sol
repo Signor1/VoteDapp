@@ -4,11 +4,13 @@ pragma solidity ^0.8.0;
 contract Vote {
     uint public totalVoteCount;
     uint public candidateCount;
-    uint constant public MAX_CANDIDATES = 5;
     uint public electionTime;
     string voterscardPasscode;
 
-    enum VoterStatus { NotVoted, Voted }
+    enum VoterStatus {
+        NotVoted,
+        Voted
+    }
 
     struct Voter {
         VoterStatus status;
@@ -19,9 +21,9 @@ contract Vote {
     mapping(uint => Voter) public voters;
     mapping(address => bool) public voted;
 
-    string[MAX_CANDIDATES] public candidateNames;
+    string[] public candidateNames;
 
-    modifier electionTimeChecker {
+    modifier electionTimeChecker() {
         require(block.timestamp < electionTime, "Election time has elapsed");
         _;
     }
@@ -46,17 +48,28 @@ contract Vote {
     }
 
     function addCandidate(string memory _name) public onlyOwner {
-        require(candidateCount < MAX_CANDIDATES, "Maximum number of candidates reached");
+        require(
+            candidateCount < 5,
+            "Maximum number of candidates reached"
+        );
         candidateCount++;
-        candidateNames[candidateCount - 1] = _name;
+        //  candidateNames[candidateCount - 1] = _name;
+        candidateNames.push(_name);
         voters[candidateCount] = Voter(VoterStatus.NotVoted, _name, 0);
         emit CandidateAdded(candidateCount, _name);
     }
 
-    function vote(uint _candidate, string memory _voterscardPasscode) external electionTimeChecker {
+    function vote(
+        uint _candidate,
+        string memory _voterscardPasscode
+    ) external electionTimeChecker {
         require(!voted[msg.sender], "Already voted");
         require(_candidate <= candidateCount, "Invalid candidate");
-        require(keccak256(abi.encodePacked(voterscardPasscode)) == keccak256(abi.encodePacked(_voterscardPasscode)), "Wrong passcode, You can't vote, input correct passcode");
+        require(
+            keccak256(abi.encodePacked(voterscardPasscode)) ==
+                keccak256(abi.encodePacked(_voterscardPasscode)),
+            "Wrong passcode, You can't vote, input correct passcode"
+        );
 
         // Update voteCounter for the selected candidate
         voters[_candidate].voteCounter++;
@@ -67,16 +80,26 @@ contract Vote {
 
         emit VoteCast(msg.sender, _candidate);
     }
+    function getall() external view returns(string[] memory all){
+        return candidateNames;
 
-    function getAllCandidates() external view returns (string[] memory allNames) {
-        allNames = new string[](candidateCount);
-
-        for (uint i = 0; i < candidateCount; i++) {
-            allNames[i] = candidateNames[i];
-        }
-
-        return allNames;
     }
+
+    
+
+    // function getAllCandidates()
+    //     external
+    //     view
+    //     returns (string[] memory allNames)
+    // {
+    //     allNames = new string[](candidateCount);
+
+    //     for (uint i = 0; i < candidateCount; i++) {
+    //         allNames[i] = candidateNames[i];
+    //     }
+
+    //     return allNames;
+    // }
 
     function winnerName() external view returns (string memory winnerName_) {
         uint maxVotes = 0;
@@ -88,5 +111,3 @@ contract Vote {
         }
     }
 }
-
-
