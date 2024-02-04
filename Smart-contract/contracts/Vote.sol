@@ -5,7 +5,7 @@ contract Vote {
     uint public totalVoteCount;
     uint public candidateCount;
     uint public electionTime;
-    string voterscardPasscode;
+    string voterscard;
 
     enum VoterStatus {
         NotVoted,
@@ -19,7 +19,7 @@ contract Vote {
     }
 
     mapping(uint => Voter) public voters;
-    mapping(address => bool) public voted;
+    mapping(address => bool) public Registeredvoter;
 
     string[] public candidateNames;
 
@@ -42,9 +42,9 @@ contract Vote {
         INEC = msg.sender;
         addCandidate("Daniel");
         addCandidate("Sogo");
-        addCandidate("Jeff");
+        addCandidate("Emmanuel");
         electionTime = block.timestamp + 30 minutes;
-        voterscardPasscode = "123";
+        voterscard = "123";
     }
 
     function addCandidate(string memory _name) public onlyOwner {
@@ -61,26 +61,26 @@ contract Vote {
 
     function vote(
         uint _candidate,
-        string memory _voterscardPasscode
+        string memory _voterscard
     ) external electionTimeChecker {
-        require(!voted[msg.sender], "Already voted");
+        require(!Registeredvoter[msg.sender], "Already voted");
         require(_candidate <= candidateCount, "Invalid candidate");
         require(
-            keccak256(abi.encodePacked(voterscardPasscode)) ==
-                keccak256(abi.encodePacked(_voterscardPasscode)),
+            keccak256(abi.encodePacked(voterscard)) ==
+                keccak256(abi.encodePacked(_voterscard)),
             "Wrong passcode, You can't vote, input correct passcode"
         );
 
-        // Update voteCounter for the selected candidate
+        // Update  and increment the voteCounter
         voters[_candidate].voteCounter++;
         voters[_candidate].status = VoterStatus.Voted;
 
-        voted[msg.sender] = true;
+        Registeredvoter[msg.sender] = true;
         totalVoteCount++;
 
         emit VoteCast(msg.sender, _candidate);
     }
-    function getall() external view returns(string[] memory all){
+    function getCandidates() external view returns(string[] memory all){
         return candidateNames;
 
     }
@@ -101,11 +101,11 @@ contract Vote {
     //     return allNames;
     // }
 
-    function winnerName() external view returns (string memory winnerName_) {
-        uint maxVotes = 0;
+    function Winner() external view returns (string memory winnerName_) {
+        uint max = 0;
         for (uint i = 1; i <= candidateCount; i++) {
-            if (voters[i].voteCounter > maxVotes) {
-                maxVotes = voters[i].voteCounter;
+            if (voters[i].voteCounter > max) {
+                max = voters[i].voteCounter;
                 winnerName_ = voters[i].name;
             }
         }
