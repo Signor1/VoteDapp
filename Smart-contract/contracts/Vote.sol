@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract Ballot {
+contract Vote {
     uint public totalVoteCount;
-    uint constant public MAX_CANDIDATES = 5;
+    uint public candidateCount;
+    uint public electionTime;
+    string voterscard;
 
-    enum VoterStatus { NotVoted, Voted }
+    enum VoterStatus {
+        NotVoted,
+        Voted
+    }
 
     struct Voter {
         VoterStatus status;
@@ -14,9 +19,14 @@ contract Ballot {
     }
 
     mapping(uint => Voter) public voters;
-    mapping(address => bool) public voted;
+    mapping(address => bool) public Registeredvoter;
 
-    string[MAX_CANDIDATES] public candidateNames;
+    string[] public candidateNames;
+
+    modifier electionTimeChecker() {
+        require(block.timestamp < electionTime, "Election time has elapsed");
+        _;
+    }
 
     event CandidateAdded(uint indexed candidateId, string name);
     event VoteCast(address indexed voter, uint indexed candidateId);
@@ -32,41 +42,72 @@ contract Ballot {
         INEC = msg.sender;
         addCandidate("Daniel");
         addCandidate("Sogo");
-        addCandidate("Jeff");
+        addCandidate("Emmanuel");
+        electionTime = block.timestamp + 30 minutes;
+        voterscard = "123";
     }
 
     function addCandidate(string memory _name) public onlyOwner {
-         totalVoteCount++;
-        require(totalVoteCount < MAX_CANDIDATES, "Maximum number of candidates reached");
-        voters[totalVoteCount] = Voter(VoterStatus.NotVoted, _name, 0);
-        emit CandidateAdded(totalVoteCount, _name);
+        require(
+            candidateCount < 5,
+            "Maximum number of candidates reached"
+        );
+        candidateCount++;
+        //  candidateNames[candidateCount - 1] = _name;
+        candidateNames.push(_name);
+        voters[candidateCount] = Voter(VoterStatus.NotVoted, _name, 0);
+        emit CandidateAdded(candidateCount, _name);
     }
 
-    function vote(uint _candidate) external {
-        require(!voted[msg.sender], "Already voted");
-        require(_candidate <= totalVoteCount, "Invalid candidate");
+    function vote(
+        uint _candidate,
+        string memory _voterscard
+    ) external electionTimeChecker {
+        require(!Registeredvoter[msg.sender], "Already voted");
+        require(_candidate <= candidateCount, "Invalid candidate");
+        require(
+            keccak256(abi.encodePacked(voterscard)) ==
+                keccak256(abi.encodePacked(_voterscard)),
+            "Wrong passcode, You can't vote, input correct passcode"
+        );
 
-        // Update voteCounter for the selected candidate
+        // Update  and increment the voteCounter
         voters[_candidate].voteCounter++;
         voters[_candidate].status = VoterStatus.Voted;
 
-        voted[msg.sender] = true;
+        Registeredvoter[msg.sender] = true;
+        totalVoteCount++;
 
         emit VoteCast(msg.sender, _candidate);
     }
-
-     function getAllCandidates() external view returns (string[MAX_CANDIDATES] memory) {
+    function getCandidates() external view returns(string[] memory all){
         return candidateNames;
+
     }
 
-    function winnerName() external view returns (string memory winnerName_) {
-        uint maxVotes = 0;
-        for (uint i = 1; i <= totalVoteCount; i++) {
-            if (voters[i].voteCounter > maxVotes) {
-                maxVotes = voters[i].voteCounter;
+    
+
+    // function getAllCandidates()
+    //     external
+    //     view
+    //     returns (string[] memory allNames)
+    // {
+    //     allNames = new string[](candidateCount);
+
+    //     for (uint i = 0; i < candidateCount; i++) {
+    //         allNames[i] = candidateNames[i];
+    //     }
+
+    //     return allNames;
+    // }
+
+    function Winner() external view returns (string memory winnerName_) {
+        uint max = 0;
+        for (uint i = 1; i <= candidateCount; i++) {
+            if (voters[i].voteCounter > max) {
+                max = voters[i].voteCounter;
                 winnerName_ = voters[i].name;
             }
         }
     }
 }
-
